@@ -1,0 +1,401 @@
+#define _USE_MATH_DEFINES
+#include<iostream>
+#include<fstream>
+#include<string>
+#include<vector>
+#include<utility>
+#include<algorithm>
+#include<climits>
+#include<set>
+#include<map>
+#include<cmath>
+#include<iomanip>
+#include<iterator>
+#include<queue>
+#include<stack>
+#include<cctype>
+#include<deque>
+#include<time.h>
+#include<bitset>
+#include<random>
+#include <functional>
+#include<unordered_set>
+#include<unordered_map>
+#include<random>
+#include<numeric>
+#include<chrono>
+#include<sstream>
+#include <valarray> 
+#include<list>
+#include<complex>
+#include<cassert>
+
+
+typedef long long ll;
+typedef long double ld;
+typedef unsigned long long ull;
+
+#pragma warning(disable : 4996)
+#pragma comment(linker, "/STACK:16777216")
+#define pb push_back
+#define en '\n'
+#define forn(i,n) for(int i = 0;i<n;i++)
+#define for0(i,n) for(int i = 0;i<n;i++)
+#define all(x) (x).begin(),(x).end()
+#define rall(x) (x).rbegin(),(x).rend()
+#define vec vector
+#define pii pair<int,int>
+#define pll pair<ll,ll>
+#define szof(x) int(x.size())
+#define sqr(x) ((x)*(x))
+#define debug(x) cerr<<#x<<" = "<<x<<'\n' 
+
+using namespace std;
+
+const int INF = 1000000000 + 1e8;
+const ll LINF = 2000000000000000000;
+
+const int N = 5e2 + 10;
+
+struct point {
+	int x, y;
+	bool end = true;
+
+	point() {
+		x = 0, y = 0;
+	}
+
+	point(int _x, int _y) {
+		x = _x, y = _y;
+	}
+
+	bool operator== (point p) {
+		return p.x == x && p.y == y;
+	}
+
+	bool operator!= (point p) {
+		return p.x != x || p.y != y;
+	}
+
+	bool operator< (point p) {
+		return (x == p.x ? y < p.y : x < p.x);
+	}
+
+	point operator+(point p) {
+		return point(x + p.x, y + p.y);
+	}
+};
+
+
+struct line {
+	point st, end;
+
+	line(point p1, point p2) {
+		st = p1, end = p2;
+	}
+};
+
+
+bool is_horizont(line l) {
+	if (l.st.y == l.end.y) {
+		return 1;
+	}
+	else {
+		return 0;
+	}
+}
+
+
+const point NO_ANS = point(INF, INF);
+
+point intersect(line l1, line l2) {
+	if (is_horizont(l1) == is_horizont(l2))
+		return NO_ANS;
+
+	if (is_horizont(l2)) {
+		swap(l1, l2);
+	}
+
+	if ((l1.st < l1.end) == false) {
+		swap(l1.st, l1.end);
+	}
+	if ((l2.st < l2.end) == false) {
+		swap(l2.st, l2.end);
+	}
+
+
+	point pot = point(l2.st.x, l1.st.y);
+	pot.end = false;
+
+	bool ok = true;
+	ok &= l2.st.y <= pot.y && pot.y <= l2.end.y;
+	ok &= l1.st.x <= pot.x && pot.x <= l1.end.x;
+
+	return (ok ? pot : NO_ANS);
+}
+
+enum direction {
+	left, right, up, down
+};
+
+
+auto cmp1 = [](point a, point b) { return (a.x == b.x ? a.y < b.y : a.x < b.x); };
+set<point, decltype(cmp1)> px(cmp1);
+
+auto cmp2 = [](point a, point b) { return (a.y == b.y ? a.x < b.x : a.y < b.y); };
+set<point, decltype(cmp2)> py(cmp2);
+
+
+point find_closest(point p, direction dir) {
+	if (dir == direction::right) {
+		auto it = py.upper_bound(p);
+		return *it;
+	}
+	if (dir == direction::left) {
+		auto it = py.lower_bound(p);
+		return *prev(it);
+	}
+	if (dir == direction::up) {
+		auto it = px.upper_bound(p);
+		return *it;
+	}
+	if (dir == direction::down) {
+		auto it = px.lower_bound(p);
+		return *prev(it);
+	}
+}
+
+
+direction change_dir(point p, direction dir) {
+	if (p.end == true) {
+		if (dir == direction::left) {
+			return direction::right;
+		}
+		if (dir == direction::right) {
+			return direction::left;
+		}
+		if (dir == direction::up) {
+			return direction::down;
+		}
+		if (dir == direction::down) {
+			return direction::up;
+		}
+	}
+
+	if (dir == direction::right) {
+		return direction::up;
+	}
+	if (dir == direction::up) {
+		return direction::left;
+	}
+	if (dir == direction::left) {
+		return direction::down;
+	}
+	if (dir == direction::down) {
+		return direction::right;
+	}
+}
+
+int p[N], sz[N];
+
+int get(int x) {
+	if (x == p[x]) {
+		return x;
+	}
+	return p[x] = get(p[x]);
+}
+
+
+void us(int a, int b) {
+	a = get(a);
+	b = get(b);
+
+	if (a != b) {
+		if (sz[a] < sz[b]) {
+			swap(a, b);
+		}
+
+		p[b] = a;
+		sz[a] += sz[b];
+	}
+}
+
+
+void solve() {
+	int n, t;
+	cin >> n >> t;
+
+	for (int i = 0; i < n; i++) {
+		p[i] = i, sz[i] = 1;
+	}
+
+	vector<line> ln;
+	vector<point> ps;
+
+	for (int i = 0; i < n; i++) {
+		int x1, y1, x2, y2;
+		cin >> x1 >> y1 >> x2 >> y2;
+		point p1 = point(x1, y1);
+		point p2 = point(x2, y2);
+
+		ln.pb(line(p1, p2));
+	}
+
+
+	for (int i = 0; i < n; i++) {
+		for (int j = i + 1; j < n; j++) {
+			auto res = intersect(ln[i], ln[j]);
+			if ((res != NO_ANS)) {
+				us(i, j);
+			}
+		}
+	}
+
+
+	for (int i = 0; i < n; i++) {
+		if (get(0) != get(i)) {
+			continue;
+		}
+		ps.pb(ln[i].end);
+		ps.pb(ln[i].st);
+		
+		for (int j = i + 1; j < n; j++) {
+			if (get(0) != get(j)) {
+				continue;
+			}
+
+			auto res = intersect(ln[i], ln[j]);
+			if (res == NO_ANS) {
+				continue;
+			}
+			ps.pb(res);
+		}
+	}
+	
+	debug(p[0]);
+	debug(p[1]);
+	debug(p[2]);
+
+	for (int i = 0; i < ps.size(); i++) {
+		px.insert(ps[i]);
+		py.insert(ps[i]);
+	}
+
+	point cur = ln[0].st;
+
+	direction dir;
+	if (is_horizont(ln[0])) {
+		if (ln[0].st.x < ln[0].end.x) {
+			dir = direction::right;
+		}
+		else {
+			dir = direction::left;
+		}
+	}
+	else {
+		if (ln[0].st.y < ln[0].end.y) {
+			dir = direction::up;
+		}
+		else {
+			dir = direction::down;
+		}
+	}
+
+
+	vector<pair<point, direction>> path = { {cur, dir} };
+
+	vector<ll> tm = { 0 };
+
+
+	map<pair<pii, int>, int> mp;
+
+	int it = 0;
+	mp[{ {cur.x, cur.y}, dir }] = it++;
+
+	ll cycle_st, cycle_end;
+
+	while (true) {
+		point nt = find_closest(cur, dir);
+		dir = change_dir(nt, dir);
+
+		ll spend_time = abs(nt.x - cur.x) + abs(nt.y - cur.y);
+
+		//cout << nt.x << ' ' << nt.y << ' ' << tm.back() + spend_time << en;
+
+
+		tm.pb(tm.back() + spend_time);
+		path.pb({ nt, dir });
+
+		if (mp.count({ {nt.x, nt.y} , dir })) {
+			cycle_st = mp[{ {nt.x, nt.y}, dir }];
+			cycle_end = it++;
+			break;
+		}
+
+		mp[{ {nt.x, nt.y}, dir }] = it++;
+
+		cur = nt;
+	}
+
+	//if (tm[cycle_st] < t) {
+	//	int time_cycle = tm[cycle_end] - tm[cycle_st];
+
+	//	int new_t = (t - tm[cycle_st]) % time_cycle;
+
+	//	t = tm[cycle_st] + new_t;
+	//}
+
+	ll time_cycle = tm[cycle_end] - tm[cycle_st];
+	t %= time_cycle;
+
+	debug(t);
+
+	if (t == 0) {
+		point ans = path[0].first;
+		cout << ans.x << ' ' << ans.y << en;
+		return;
+	}
+
+	int pos = lower_bound(all(tm), t) - tm.begin() - 1;
+
+	t -= tm[pos];
+
+	point ans = path[pos].first;
+	dir = path[pos].second;
+
+	if (dir == direction::left) {
+		ans = ans + point(-t, 0);
+	}
+	if (dir == direction::right) {
+		ans = ans + point(t, 0);
+	}
+	if (dir == direction::up) {
+		ans = ans + point(0, t);
+	}
+	if (dir == direction::down) {
+		ans = ans + point(0, -t);
+	}
+
+	cout << ans.x << ' ' << ans.y << en;
+}
+
+
+int main() {
+	srand(time(0));
+	ios::sync_with_stdio(false);
+	cin.tie(NULL);
+	cout.tie(NULL);
+
+
+#ifdef _DEBUG	
+	freopen("input.txt", "r", stdin);
+	//freopen("output.txt", "w", stdout);
+#endif
+
+
+	int tst = 1;
+	//cin >> tst;
+
+	while (tst--)
+		solve();
+}
