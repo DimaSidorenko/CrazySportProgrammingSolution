@@ -7,5 +7,5 @@
 Ссылка на сборы: https://official.contest.yandex.com/ptz-winter-2021/
 
 
-(Modern C++ Solution)[https://github.com/DimaSidorenko/CrazySportProgrammingSolution/blob/main/Realization1]
+[Modern C++ 14 GNU Solution](https://github.com/DimaSidorenko/CrazySportProgrammingSolution/blob/main/Realization1)
 
